@@ -2,6 +2,7 @@ from flask import Flask, request
 import logging
 import json
 from translate import translate
+import random
 
 app = Flask(__name__)
 
@@ -33,6 +34,9 @@ python_answers = {
                 "Вот и в честь «Монти Пайтона (Monty Python)» язык назвался Python.",
     "дзен": "Чтобы увидеть дзен языка питон, впишите команду 'import this'"
 }
+memes = ["1652229/3fa34e4178a2944fe6d6", "1030494/43bb66bafd7270b023f4",
+         "965417/f4b36d132f8bb42a047f", "965417/29789166ee30b5293dca"]
+already_shown = []
 
 
 @app.route('/post', methods=['POST'])
@@ -95,8 +99,23 @@ def handle_dialog(res, req):
                                      "Карта Яндекс Лицеев", "Django for girls", "import antigravity"]:
         res['response']['text'] = "Вот ваша страница"
         return
-
     command = req['request']["command"].lower()
+
+    if "покажи" in command and "мем" in command:
+        if len(memes) != len(already_shown):
+            meme = random.choice(memes)
+            while meme in already_shown:
+                meme = random.choice(memes)
+            res['response']['card'] = {}
+            res['response']['text'] = " "
+            res['response']['card']['type'] = 'BigImage'
+            res['response']['card']['title'] = 'Вот мем'
+            res['response']['card']['image_id'] = meme
+            already_shown.append(meme)
+            return
+        res['response']['text'] = "У меня закочились мемы :("
+        return
+
     text = get_text(command)
     if text is not None:
         text = translate(text, "ru")

@@ -1,6 +1,5 @@
 import requests
-import this
-import antigravity
+
 
 def translate(text, lang):
 
