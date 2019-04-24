@@ -1,4 +1,6 @@
 from flask import Flask, request
+import urllib.request
+import requests
 import logging
 import json
 from translate import translate
@@ -34,10 +36,9 @@ python_answers = {
                 "Вот и в честь «Монти Пайтона (Monty Python)» язык назвался Python.",
     "дзен": "Чтобы увидеть дзен языка питон, впишите команду 'import this'"
 }
-memes = ["1652229/3fa34e4178a2944fe6d6", "1030494/43bb66bafd7270b023f4",
-         "965417/f4b36d132f8bb42a047f", "965417/29789166ee30b5293dca"]
-already_shown = []
 
+already_shown = []
+memes = [i for i in range(1, 2141)]
 
 @app.route('/post', methods=['POST'])
 def main():
@@ -106,11 +107,20 @@ def handle_dialog(res, req):
             meme = random.choice(memes)
             while meme in already_shown:
                 meme = random.choice(memes)
+            url = urllib.request.urlopen(f"https://xkcd.com/{meme}/info.0.json")
+            m = json.loads(url.read().decode())
+            image = m["img"]
+
+            r = requests.post("https://dialogs.yandex.net/api/v1/skills/6309f400-2e62-41c9-9879-31054a05465a/images",
+                              headers={"Authorization": "OAuth AQAAAAAgUp_wAAT7o0KUof8Hr0KBjmZ59Harjk4",
+                                       "Content-Type": "application/json"},
+                              json={"url": image})
+            data = json.loads(r.content)
             res['response']['card'] = {}
             res['response']['text'] = " "
             res['response']['card']['type'] = 'BigImage'
             res['response']['card']['title'] = 'Вот мем'
-            res['response']['card']['image_id'] = meme
+            res['response']['card']['image_id'] = data["image"]["id"]
             already_shown.append(meme)
             return
         res['response']['text'] = "У меня закочились мемы :("
